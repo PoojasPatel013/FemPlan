@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Tracker - Smart Task Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="{{ url_for('dashboard') }}" class="sidebar-logo">
+                    <i class="fas fa-tasks me-2"></i>Smart Task Manager
+                </a>
+                <button class="btn btn-link d-md-none" id="closeSidebar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="sidebar-user">
+                <div class="avatar">
+                    <span>{{ session.username[0].upper() }}</span>
+                </div>
+                <div class="user-info">
+                    <h5>{{ session.username }}</h5>
+                    <span class="user-status">Online</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="{{ url_for('dashboard') }}">
+                            <i class="fas fa-home"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('tasks') }}">
+                            <i class="fas fa-list-check"></i>
+                            <span>Tasks</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('events') }}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Events</span>
+                        </a>
+                    </li>
+                    <li class="active">
+                        <a href="{{ url_for('cycle') }}">
+                            <i class="fas fa-venus"></i>
+                            <span>Cycle Tracker</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('analytics') }}">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Analytics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('settings') }}">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-light w-100">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <button class="btn btn-link d-md-none" id="openSidebar">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="header-title">
+                    <h1>Menstrual Cycle Tracker</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#trackCycleModal">
+                        <i class="fas fa-plus me-2"></i>Track New Cycle
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="content-wrapper">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Cycle Information -->
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Cycle Information</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if cycles %}
+                                    {% set latest_cycle = cycles[0] %}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="cycle-info-card">
+                                                <h6>Last Period Start Date</h6>
+                                                <p>{{ latest_cycle.last_cycle_date.strftime('%b %d, %Y') }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="cycle-info-card">
+                                                <h6>Next Period Expected</h6>
+                                                <p>{{ latest_cycle.next_cycle_date.strftime('%b %d, %Y') }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="cycle-info-card">
+                                                <h6>Cycle Length</h6>
+                                                <p>{{ latest_cycle.cycle_length }} days</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="cycle-info-card">
+                                                <h6>Period Length</h6>
+                                                <p>{{ latest_cycle.period_length }} days</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="cycle-info-card">
+                                                <h6>Fertility Window Start</h6>
+                                                <p>{{ latest_cycle.fertility_window.start.strftime('%b %d, %Y') }}</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="cycle-info-card">
+                                                <h6>Fertility Window End</h6>
+                                                <p>{{ latest_cycle.fertility_window.end.strftime('%b %d, %Y') }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="cycle-timeline mt-4">
+                                        <div class="timeline-header">
+                                            <span>Last Period</span>
+                                            <span>Fertility Window</span>
+                                            <span>Next Period</span>
+                                        </div>
+                                        <div class="timeline-bar">
+                                            {% set total_days = latest_cycle.cycle_length %}
+                                            {% set days_passed = (now - latest_cycle.last_cycle_date).days %}
+                                            {% set fertility_start = (latest_cycle.fertility_window.start - latest_cycle.last_cycle_date).days %}
+                                            {% set fertility_end = (latest_cycle.fertility_window.end - latest_cycle.last_cycle_date).days %}
+                                            
+                                            <div class="timeline-progress" style="width: {{ (days_passed / total_days * 100)|round }}%"></div>
+                                            <div class="timeline-marker period-start" style="left: 0%">
+                                                <div class="marker-dot"></div>
+                                            </div>
+                                            <div class="timeline-marker fertility-start" style="left: {{ (fertility_start / total_days * 100)|round }}%">
+                                                <div class="marker-dot"></div>
+                                            </div>
+                                            <div class="timeline-marker fertility-end" style="left: {{ (fertility_end / total_days * 100)|round }}%">
+                                                <div class="marker-dot"></div>
+                                            </div>
+                                            <div class="timeline-marker period-end" style="left: 100%">
+                                                <div class="marker-dot"></div>
+                                            </div>
+                                        </div>
+                                        <div class="timeline-dates">
+                                            <span>{{ latest_cycle.last_cycle_date.strftime('%b %d') }}</span>
+                                            <span>{{ latest_cycle.fertility_window.start.strftime('%b %d') }}</span>
+                                            <span>{{ latest_cycle.fertility_window.end.strftime('%b %d') }}</span>
+                                            <span>{{ latest_cycle.next_cycle_date.strftime('%b %d') }}</span>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-venus fa-3x text-muted mb-3"></i>
+                                        <h5>No cycle data available</h5>
+                                        <p>Start tracking your menstrual cycle to see information here.</p>
+                                        <button class="btn btn-danger mt-3" data-bs-toggle="modal" data-bs-target="#trackCycleModal">
+                                            Track Your First Cycle
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Cycle History</h5>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="cycle-history-list">
+                                    {% if cycles %}
+                                        {% for cycle in cycles %}
+                                            <li class="cycle-history-item">
+                                                <div class="cycle-history-date">
+                                                    <span class="month">{{ cycle.last_cycle_date.strftime('%b') }}</span>
+                                                    <span class="day">{{ cycle.last_cycle_date.strftime('%d') }}</span>
+                                                </div>
+                                                <div class="cycle-history-details">
+                                                    <h6>Period Start Date</h6>
+                                                    <p>Cycle Length: {{ cycle.cycle_length }} days</p>
+                                                    <p>Period Length: {{ cycle.period_length }} days</p>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    {% else %}
+                                        <li class="text-center py-3">No history available</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-4">
+                            <div class="card-header">
+                                <h5 class="card-title">Health Tips</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="health-tip">
+                                    <i class="fas fa-heartbeat text-danger"></i>
+                                    <div>
+                                        <h6>Stay Hydrated</h6>
+                                        <p>Drink plenty of water during your period to reduce bloating and cramps.</p>
+                                    </div>
+                                </div>
+                                <div class="health-tip">
+                                    <i class="fas fa-apple-alt text-success"></i>
+                                    <div>
+                                        <h6>Eat Iron-Rich Foods</h6>
+                                        <p>Include leafy greens, beans, and lean meats in your diet to prevent anemia.</p>
+                                    </div>
+                                </div>
+                                <div class="health-tip">
+                                    <i class="fas fa-walking text-primary"></i>
+                                    <div>
+                                        <h6>Light Exercise</h6>
+                                        <p>Gentle exercise like walking or yoga can help reduce menstrual pain.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Track Cycle Modal -->
+    <div class="modal fade" id="trackCycleModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Track Menstrual Cycle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="cycleForm" action="{{ url_for('track_cycle') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="lastCycleDate" class="form-label">Last Period Start Date</label>
+                            <input type="date" class="form-control" id="lastCycleDate" name="last_cycle_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cycleLength" class="form-label">Cycle Length (days)</label>
+                            <input type="number" class="form-control" id="cycleLength" name="cycle_length" value="28" min="21" max="35" required>
+                            <div class="form-text">Average cycle length is 28 days, but can range from 21-35 days.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="periodLength" class="form-label">Period Length (days)</label>
+                            <input type="number" class="form-control" id="periodLength" name="period_length" value="5" min="2" max="10" required>
+                            <div class="form-text">Average period length is 3-5 days, but can range from 2-10 days.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Track Cycle</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar toggle for mobile
+            document.getElementById('openSidebar').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.add('show');
+            });
+
+            document.getElementById('closeSidebar').addEventListener('click', function() {
+                document.getElementById('sidebar').classList.remove('show');
+            });
+        });
+    </script>
+</body>
+</html>

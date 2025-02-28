@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+  <style>
+    .st0{fill:#f8fafc}.st1{fill:#e2e8f0}.st2{fill:#cbd5e1}.st3{fill:#94a3b8}.st4{fill:#6366f1}.st5{fill:#4f46e5}.st6{fill:#ef4444}.st7{fill:#10b981}.st8{fill:#f97316}.st9{fill:#f59e0b}
+  </style>
+  <g id="dashboard">
+    <rect class="st0" width="600" height="400"/>
+    <rect x="50" y="50" width="150" height="300" rx="5" ry="5" class="st1"/>
+    <rect x="60" y="70" width="130" height="40" rx="3" ry="3" class="st4"/>
+    <rect x="60" y="120" width="130" height="20" rx="3" ry="3" class="st2"/>
+    <rect x="60" y="150" width="130" height="20" rx="3" ry="3" class="st2"/>
+    <rect x="60" y="180" width="130" height="20" rx="3" ry="3" class="st2"/>
+    <rect x="60" y="210" width="130" height="20" rx="3" ry="3" class="st2"/>
+    <rect x="60" y="240" width="130" height="20" rx="3" ry="3" class="st2"/>
+    <rect x="220" y="50" width="330" height="50" rx="5" ry="5" class="st1"/>
+    <rect x="230" y="65" width="200" height="20" rx="3" ry="3" class="st3"/>
+    <rect x="450" y="65" width="90" height="20" rx="3" ry="3" class="st4"/>
+    <rect x="220" y="120" width="100" height="100" rx="5" ry="5" class="st7"/>
+    <rect x="335" y="120" width="100" height="100" rx="5" ry="5" class="st8"/>
+    <rect x="450" y="120" width="100" height="100" rx="5" ry="5" class="st6"/>
+    <rect x="220" y="240" width="210" height="110" rx="5" ry="5" class="st1"/>
+    <rect x="230" y="255" width="190" height="20" rx="3" ry="3" class="st3"/>
+    <rect x="230" y="285" width="190" height="55" rx="3" ry="3" class="st2"/>
+    <rect x="450" y="240" width="100" height="110" rx="5" ry="5" class="st1"/>
+    <rect x="460" y="255" width="80" height="20" rx="3" ry="3" class="st3"/>
+    <rect x="460" y="285" width="80" height="55" rx="3" ry="3" class="st9"/>
+  </g>
+</svg>
+
