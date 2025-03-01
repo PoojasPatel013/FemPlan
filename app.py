@@ -10,7 +10,7 @@ import random
 
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb+srv://poojaspatel1375:Pooja1375@femplann.zfzkl.mongodb.net/femplann?retryWrites=true&w=majority'
-app.secret_key = 'poohhhhh'  # Change this in production
+app.secret_key = 'poohhhhh'  
 mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 
@@ -890,6 +890,8 @@ if __name__ == '__main__':
         mongo.db.water_intake.create_index([('user_id', 1), ('date', 1)])
         mongo.db.sleep_data.create_index([('user_id', 1), ('date', 1)])
         mongo.db.self_care_goals.create_index([('user_id', 1), ('date', 1)])
-
+    import os
+    port = int(os.environ.get("PORT", 5000))  # Use PORT from environment variable
+    app.run(host="0.0.0.0", port=port, debug=True)
     app.run(debug=True)
 
