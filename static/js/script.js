@@ -1,4 +1,90 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Custom cursor
+    const cursorDot = document.createElement('div');
+    cursorDot.className = 'cursor-dot';
+    document.body.appendChild(cursorDot);
+
+    const cursorOutline = document.createElement('div');
+    cursorOutline.className = 'cursor-outline';
+    document.body.appendChild(cursorOutline);
+
+    document.addEventListener('mousemove', function(e) {
+        if (window.innerWidth > 768) {
+            cursorDot.style.left = e.clientX + 'px';
+            cursorDot.style.top = e.clientY + 'px';
+            
+            // Add a slight delay to the outline for a trailing effect
+            setTimeout(() => {
+                cursorOutline.style.left = e.clientX + 'px';
+                cursorOutline.style.top = e.clientY + 'px';
+            }, 50);
+        }
+    });
+
+    // Hover effect for interactive elements
+    const interactiveElements = document.querySelectorAll('a, button, .btn, input, select, textarea, .card, .feature-card');
+    interactiveElements.forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            if (window.innerWidth > 768) {
+                cursorOutline.style.width = '60px';
+                cursorOutline.style.height = '60px';
+                cursorOutline.style.opacity = '0.5';
+            }
+        });
+        
+        el.addEventListener('mouseleave', () => {
+            if (window.innerWidth > 768) {
+                cursorOutline.style.width = '40px';
+                cursorOutline.style.height = '40px';
+                cursorOutline.style.opacity = '1';
+            }
+        });
+    });
+
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                window.scrollTo({
+                    top: targetElement.offsetTop - 80,
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Parallax effect for landing page
+    const landingPage = document.querySelector('.landing-page');
+    if (landingPage) {
+        window.addEventListener('scroll', function() {
+            const scrollPosition = window.scrollY;
+            landingPage.style.backgroundPosition = `center ${scrollPosition * 0.5}px`;
+        });
+    }
+
+    // Animate elements on scroll
+    const animateOnScroll = function() {
+        const elements = document.querySelectorAll('.feature-card, .stat-card, .card');
+        
+        elements.forEach(element => {
+            const elementPosition = element.getBoundingClientRect().top;
+            const windowHeight = window.innerHeight;
+            
+            if (elementPosition < windowHeight - 100) {
+                element.classList.add('fade-in-up');
+            }
+        });
+    };
+    
+    window.addEventListener('scroll', animateOnScroll);
+    animateOnScroll(); // Run once on page load
+
     // Initialize tooltips
     var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
@@ -117,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Cycle form submission
+    // Cycle form submission with animation
     const cycleForm = document.getElementById('cycleForm');
     if (cycleForm) {
         cycleForm.addEventListener('submit', function(e) {
@@ -130,6 +216,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     e.preventDefault();
                     
                     const formData = new FormData(this);
+                    
+                    // Add loading animation
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                    submitBtn.disabled = true;
                     
                     fetch(this.action, {
                         method: 'POST',
@@ -156,15 +248,20 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Show success message
                             showAlert('Menstrual cycle tracked successfully!', 'success');
                             
-                            // Refresh page or update UI
+                            // Refresh page or update UI with animation
                             setTimeout(() => {
-                                window.location.reload();
+                                document.body.classList.add('page-transition-exit-active');
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 300);
                             }, 1000);
                         }
                     })
                     .catch(error => {
                         console.error('Error:', error);
                         showAlert('An error occurred. Please try again.', 'danger');
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
                     });
                 }
             }
@@ -173,7 +270,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Task checkbox handling
+    // Task checkbox handling with animation
     const taskCheckboxes = document.querySelectorAll('.task-checkbox');
     if (taskCheckboxes.length > 0) {
         taskCheckboxes.forEach(checkbox => {
@@ -186,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Delete task handling
+    // Delete task handling with animation
     const deleteTaskButtons = document.querySelectorAll('.delete-task');
     if (deleteTaskButtons.length > 0) {
         deleteTaskButtons.forEach(button => {
@@ -197,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Delete event handling
+    // Delete event handling with animation
     const deleteEventButtons = document.querySelectorAll('.delete-event');
     if (deleteEventButtons.length > 0) {
         deleteEventButtons.forEach(button => {
@@ -208,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Sidebar toggle for mobile
+    // Sidebar toggle for mobile with animation
     const openSidebarBtn = document.getElementById('openSidebar');
     const closeSidebarBtn = document.getElementById('closeSidebar');
     const sidebar = document.getElementById('sidebar');
@@ -216,14 +313,27 @@ document.addEventListener('DOMContentLoaded', function() {
     if (openSidebarBtn && closeSidebarBtn && sidebar) {
         openSidebarBtn.addEventListener('click', function() {
             sidebar.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling when sidebar is open
         });
         
         closeSidebarBtn.addEventListener('click', function() {
             sidebar.classList.remove('show');
+            document.body.style.overflow = ''; // Restore scrolling
+        });
+        
+        // Close sidebar when clicking outside
+        document.addEventListener('click', function(e) {
+            if (sidebar.classList.contains('show') && 
+                !sidebar.contains(e.target) && 
+                e.target !== openSidebarBtn && 
+                !openSidebarBtn.contains(e.target)) {
+                sidebar.classList.remove('show');
+                document.body.style.overflow = '';
+            }
         });
     }
 
-    // Dark mode toggle
+    // Dark mode toggle with animation
     const darkModeToggle = document.getElementById('darkModeToggle');
     if (darkModeToggle) {
         // Check for saved theme preference or use preferred color scheme
@@ -257,6 +367,44 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Animated number counters for statistics
+    const animateCounter = (element, target, duration = 1000) => {
+        if (!element) return;
+        
+        const start = 0;
+        const increment = target / (duration / 16);
+        let current = start;
+        
+        const updateCounter = () => {
+            current += increment;
+            if (current >= target) {
+                element.textContent = target;
+            } else {
+                element.textContent = Math.floor(current);
+                requestAnimationFrame(updateCounter);
+            }
+        };
+        
+        updateCounter();
+    };
+    
+    const statNumbers = document.querySelectorAll('.stat-details h3');
+    if (statNumbers.length > 0) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const target = parseInt(entry.target.textContent);
+                    animateCounter(entry.target, target);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        statNumbers.forEach(number => {
+            observer.observe(number);
+        });
+    }
+
     // Helper functions
     function completeTask(taskId, element) {
         if (confirm('Mark this task as complete?')) {
@@ -272,8 +420,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     const taskItem = element.closest('.task-item');
                     if (taskItem) {
                         taskItem.classList.add('completed');
+                        taskItem.style.height = taskItem.offsetHeight + 'px';
+                        
                         setTimeout(() => {
-                            taskItem.remove();
+                            taskItem.style.height = '0';
+                            taskItem.style.opacity = '0';
+                            taskItem.style.padding = '0';
+                            taskItem.style.margin = '0';
+                            taskItem.style.overflow = 'hidden';
+                            
+                            setTimeout(() => {
+                                taskItem.remove();
+                            }, 500);
                         }, 500);
                     } else {
                         // For task list page
@@ -283,6 +441,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             row.querySelector('td:nth-child(5) span').classList.remove('bg-secondary');
                             row.querySelector('td:nth-child(5) span').classList.add('bg-success');
                             row.dataset.status = 'completed';
+                            
+                            // Add animation
+                            row.style.backgroundColor = 'rgba(32, 201, 151, 0.1)';
+                            setTimeout(() => {
+                                row.style.backgroundColor = '';
+                            }, 1000);
+                            
                             element.closest('button').remove();
                         }
                     }
@@ -310,12 +475,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     const taskItem = element.closest('.task-item');
                     if (taskItem) {
-                        taskItem.remove();
+                        taskItem.style.height = taskItem.offsetHeight + 'px';
+                        
+                        setTimeout(() => {
+                            taskItem.style.height = '0';
+                            taskItem.style.opacity = '0';
+                            taskItem.style.padding = '0';
+                            taskItem.style.margin = '0';
+                            taskItem.style.overflow = 'hidden';
+                            
+                            setTimeout(() => {
+                                taskItem.remove();
+                            }, 500);
+                        }, 300);
                     } else {
                         // For task list page
                         const row = element.closest('tr');
                         if (row) {
-                            row.remove();
+                            row.style.height = row.offsetHeight + 'px';
+                            row.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                row.remove();
+                            }, 300);
                         }
                     }
                     
@@ -342,12 +524,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data.success) {
                     const eventItem = element.closest('.event-item');
                     if (eventItem) {
-                        eventItem.remove();
+                        eventItem.style.height = eventItem.offsetHeight + 'px';
+                        
+                        setTimeout(() => {
+                            eventItem.style.height = '0';
+                            eventItem.style.opacity = '0';
+                            eventItem.style.padding = '0';
+                            eventItem.style.margin = '0';
+                            eventItem.style.overflow = 'hidden';
+                            
+                            setTimeout(() => {
+                                eventItem.remove();
+                            }, 500);
+                        }, 300);
                     } else {
                         // For event list page
                         const row = element.closest('tr');
                         if (row) {
-                            row.remove();
+                            row.style.height = row.offsetHeight + 'px';
+                            row.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                row.remove();
+                            }, 300);
                         }
                     }
                     
@@ -365,6 +564,13 @@ document.addEventListener('DOMContentLoaded', function() {
         const alertContainer = document.createElement('div');
         alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
         alertContainer.setAttribute('role', 'alert');
+        alertContainer.style.zIndex = '9999';
+        alertContainer.style.maxWidth = '300px';
+        alertContainer.style.boxShadow = '0 5px 15px rgba(0, 0, 0, 0.1)';
+        alertContainer.style.opacity = '0';
+        alertContainer.style.transform = 'translateY(-20px)';
+        alertContainer.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        
         alertContainer.innerHTML = `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
@@ -372,9 +578,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.body.appendChild(alertContainer);
         
+        // Trigger animation
         setTimeout(() => {
-            const alert = bootstrap.Alert.getOrCreateInstance(alertContainer);
-            alert.close();
+            alertContainer.style.opacity = '1';
+            alertContainer.style.transform = 'translateY(0)';
+        }, 10);
+        
+        setTimeout(() => {
+            alertContainer.style.opacity = '0';
+            alertContainer.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                alertContainer.remove();
+            }, 300);
         }, 3000);
     }
 
@@ -451,7 +667,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return taskQueue.getAll();
     }
 
-    // Search functionality
+    // Search functionality with animation
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
@@ -464,8 +680,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (taskTitle.includes(searchTerm)) {
                     item.style.display = '';
+                    item.style.opacity = '0';
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                    }, 100);
                 } else {
-                    item.style.display = 'none';
+                    item.style.opacity = '0';
+                    setTimeout(() => {
+                        item.style.display = 'none';
+                    }, 300);
                 }
             });
             
@@ -476,329 +699,338 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (eventTitle.includes(searchTerm)) {
                     item.style.display = '';
+                    item.style.opacity = '0';
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                    }, 100);
                 } else {
-                    item.style.display = 'none';
+                    item.style.opacity = '0';
+                    setTimeout(() => {
+                        item.style.display = 'none';
+                    }, 300);
                 }
             });
         });
     }
-
     // Analytics chart initialization
-    const completionTrendChart = document.getElementById('completionTrendChart');
-    if (completionTrendChart) {
-        const completionTrendData = JSON.parse(completionTrendChart.dataset.trend || '[]');
+const completionTrendChart = document.getElementById('completionTrendChart');
+if (completionTrendChart) {
+    const completionTrendData = JSON.parse(completionTrendChart.dataset.trend || '[]');
+    
+    if (completionTrendData.length > 0) {
+        const ctx = completionTrendChart.getContext('2d');
         
-        if (completionTrendData.length > 0) {
-            const ctx = completionTrendChart.getContext('2d');
-            
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: completionTrendData.map(item => item.day),
-                    datasets: [{
-                        label: 'Tasks Completed',
-                        data: completionTrendData.map(item => item.count),
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        borderColor: 'rgba(99, 102, 241, 1)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                        },
-                        title: {
-                            display: true,
-                            text: 'Task Completion Trend (Last 7 Days)'
-                        }
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: completionTrendData.map(item => item.day),
+                datasets: [{
+                    label: 'Tasks Completed',
+                    data: completionTrendData.map(item => item.count),
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                    borderColor: 'rgba(99, 102, 241, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
                     },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                precision: 0
-                            }
+                    title: {
+                        display: true,
+                        text: 'Task Completion Trend (Last 7 Days)'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
                         }
                     }
                 }
+            }
+        });
+    }
+}
+
+// Task distribution chart
+const taskDistributionChart = document.getElementById('taskDistributionChart');
+if (taskDistributionChart) {
+    const highPriority = parseInt(taskDistributionChart.dataset.high || 0);
+    const mediumPriority = parseInt(taskDistributionChart.dataset.medium || 0);
+    const lowPriority = parseInt(taskDistributionChart.dataset.low || 0);
+    
+    const ctx = taskDistributionChart.getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['High', 'Medium', 'Low'],
+            datasets: [{
+                data: [highPriority, mediumPriority, lowPriority],
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.7)',
+                    'rgba(245, 158, 11, 0.7)',
+                    'rgba(16, 185, 129, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(239, 68, 68, 1)',
+                    'rgba(245, 158, 11, 1)',
+                    'rgba(16, 185, 129, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                title: {
+                    display: true,
+                    text: 'Task Distribution by Priority'
+                }
+            }
+        }
+    });
+}
+
+// Event distribution chart
+const eventDistributionChart = document.getElementById('eventDistributionChart');
+if (eventDistributionChart) {
+    const workout = parseInt(eventDistributionChart.dataset.workout || 0);
+    const study = parseInt(eventDistributionChart.dataset.study || 0);
+    const other = parseInt(eventDistributionChart.dataset.other || 0);
+    
+    const ctx = eventDistributionChart.getContext('2d');
+    
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Workout', 'Study', 'Health', 'Social', 'Other'],
+            datasets: [{
+                data: [workout, study, other],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.7)',
+                    'rgba(139, 92, 246, 0.7)',
+                    'rgba(107, 114, 128, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(59, 130, 246, 1)',
+                    'rgba(139, 92, 246, 1)',
+                    'rgba(107, 114, 128, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                title: {
+                    display: true,
+                    text: 'Event Distribution by Category'
+                }
+            }
+        }
+    });
+}
+
+    // Water intake functionality with animation
+    const waterGlassesInput = document.getElementById("waterGlasses");
+    const waterLevelVisualization = document.getElementById("waterLevelVisualization");
+    const decreaseWaterBtn = document.getElementById("decreaseWater");
+    const increaseWaterBtn = document.getElementById("increaseWater");
+
+    if (waterGlassesInput) {
+        waterGlassesInput.addEventListener("input", function() {
+            updateWaterVisualization(this.value);
+        });
+    }
+
+    if (waterLevelVisualization && decreaseWaterBtn && increaseWaterBtn) {
+        function updateWaterVisualization(glasses) {
+            const percentage = (glasses / 8) * 100;
+            waterLevelVisualization.style.height = `${percentage}%`;
+        }
+
+        decreaseWaterBtn.addEventListener("click", () => {
+            const currentGlasses = Number.parseInt(
+                document.querySelector(".water-progress .progress-bar").getAttribute("aria-valuenow")
+            );
+            if (currentGlasses > 0) {
+                updateWaterIntake(currentGlasses - 1);
+            }
+        });
+
+        increaseWaterBtn.addEventListener("click", () => {
+            const currentGlasses = Number.parseInt(
+                document.querySelector(".water-progress .progress-bar").getAttribute("aria-valuenow")
+            );
+            if (currentGlasses < 20) {
+                updateWaterIntake(currentGlasses + 1);
+            }
+        });
+
+        function updateWaterIntake(glasses) {
+            fetch("/update_water_intake", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: `glasses=${glasses}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const progressBar = document.querySelector(".water-progress .progress-bar");
+                    
+                    // Animate the progress bar
+                    progressBar.style.transition = "width 0.5s ease";
+                    progressBar.style.width = `${(data.glasses / 8) * 100}%`;
+                    progressBar.setAttribute("aria-valuenow", data.glasses);
+                    
+                    // Update text with animation
+                    const textElement = document.querySelector(".water-progress p");
+                    textElement.style.opacity = "0";
+                    
+                    setTimeout(() => {
+                        textElement.textContent = `${data.glasses} / 8 glasses`;
+                        textElement.style.opacity = "1";
+                    }, 300);
+
+                    // Update visualization in modal if open
+                    if (waterLevelVisualization) {
+                        updateWaterVisualization(data.glasses);
+                        waterGlassesInput.value = data.glasses;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                showAlert("An error occurred. Please try again.", "danger");
             });
         }
     }
 
-    // Task distribution chart
-    const taskDistributionChart = document.getElementById('taskDistributionChart');
-    if (taskDistributionChart) {
-        const highPriority = parseInt(taskDistributionChart.dataset.high || 0);
-        const mediumPriority = parseInt(taskDistributionChart.dataset.medium || 0);
-        const lowPriority = parseInt(taskDistributionChart.dataset.low || 0);
-        
-        const ctx = taskDistributionChart.getContext('2d');
-        
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['High', 'Medium', 'Low'],
-                datasets: [{
-                    data: [highPriority, mediumPriority, lowPriority],
-                    backgroundColor: [
-                        'rgba(239, 68, 68, 0.7)',
-                        'rgba(245, 158, 11, 0.7)',
-                        'rgba(16, 185, 129, 0.7)'
-                    ],
-                    borderColor: [
-                        'rgba(239, 68, 68, 1)',
-                        'rgba(245, 158, 11, 1)',
-                        'rgba(16, 185, 129, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Task Distribution by Priority'
-                    }
+    // Sleep form submission with animation
+    const sleepForm = document.getElementById("sleepForm");
+    if (sleepForm) {
+        sleepForm.addEventListener("submit", function(e) {
+            if (this.checkValidity() === false) {
+                e.preventDefault();
+                e.stopPropagation();
+            } else {
+                // If using AJAX submission
+                if (e.submitter && e.submitter.getAttribute("data-ajax") === "true") {
+                    e.preventDefault();
+
+                    const formData = new FormData(this);
+                    
+                    // Add loading animation
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing...';
+                    submitBtn.disabled = true;
+
+                    fetch(this.action, {
+                        method: "POST",
+                        body: formData,
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Close modal if open
+                            const logSleepModal = document.getElementById("logSleepModal");
+                            if (logSleepModal) {
+                                const modal = bootstrap.Modal.getInstance(logSleepModal);
+                                if (modal) {
+                                    modal.hide();
+                                }
+                            }
+
+                            // Show success message
+                            showAlert("Sleep data logged successfully!", "success");
+
+                            // Refresh page or update UI with animation
+                            setTimeout(() => {
+                                document.body.classList.add('page-transition-exit-active');
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 300);
+                            }, 1000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        showAlert("An error occurred. Please try again.", "danger");
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    });
                 }
             }
+
+            this.classList.add("was-validated");
         });
     }
 
-    // Event distribution chart
-    const eventDistributionChart = document.getElementById('eventDistributionChart');
-    if (eventDistributionChart) {
-        const workout = parseInt(eventDistributionChart.dataset.workout || 0);
-        const study = parseInt(eventDistributionChart.dataset.study || 0);
-        const other = parseInt(eventDistributionChart.dataset.other || 0);
-        
-        const ctx = eventDistributionChart.getContext('2d');
-        
-        new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: ['Workout', 'Study', 'Health', 'Social', 'Other'],
-                datasets: [{
-                    data: [workout, study, other],
-                    backgroundColor: [
-                        'rgba(59, 130, 246, 0.7)',
-                        'rgba(139, 92, 246, 0.7)',
-                        'rgba(107, 114, 128, 0.7)'
-                    ],
-                    borderColor: [
-                        'rgba(59, 130, 246, 1)',
-                        'rgba(139, 92, 246, 1)',
-                        'rgba(107, 114, 128, 1)'
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    },
-                    title: {
-                        display: true,
-                        text: 'Event Distribution by Category'
-                    }
-                }
-            }
-        });
-    }
-    // Water intake functionality
-const waterGlassesInput = document.getElementById("waterGlasses")
-const waterLevelVisualization = document.getElementById("waterLevelVisualization")
-const decreaseWaterBtn = document.getElementById("decreaseWater")
-const increaseWaterBtn = document.getElementById("increaseWater")
+    // Calculate sleep duration based on sleep time and wake time
+    function calculateSleepDuration(sleepTime, wakeTime) {
+        const sleep = new Date(`2000-01-01T${sleepTime}`);
+        let wake = new Date(`2000-01-01T${wakeTime}`);
 
-// Declare showAlert function
-function showAlert(message, type) {
-  const alertDiv = document.createElement("div")
-  alertDiv.className = `alert alert-${type} alert-dismissible fade show`
-  alertDiv.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `
-
-  const alertContainer = document.querySelector(".container") // Or any appropriate container
-  if (alertContainer) {
-    alertContainer.insertBefore(alertDiv, alertContainer.firstChild)
-
-    // Automatically close the alert after 5 seconds
-    setTimeout(() => {
-      const bsAlert = new bootstrap.Alert(alertDiv)
-      bsAlert.close()
-    }, 5000)
-  } else {
-    console.warn("Alert container not found.")
-  }
-}
-
-if (waterGlassesInput) {
-  waterGlassesInput.addEventListener("input", function () {
-    updateWaterVisualization(this.value)
-  })
-}
-
-if (waterLevelVisualization && decreaseWaterBtn && increaseWaterBtn) {
-  function updateWaterVisualization(glasses) {
-    const percentage = (glasses / 8) * 100
-    waterLevelVisualization.style.height = `${percentage}%`
-  }
-
-  decreaseWaterBtn.addEventListener("click", () => {
-    const currentGlasses = Number.parseInt(
-      document.querySelector(".water-progress .progress-bar").getAttribute("aria-valuenow"),
-    )
-    if (currentGlasses > 0) {
-      updateWaterIntake(currentGlasses - 1)
-    }
-  })
-
-  increaseWaterBtn.addEventListener("click", () => {
-    const currentGlasses = Number.parseInt(
-      document.querySelector(".water-progress .progress-bar").getAttribute("aria-valuenow"),
-    )
-    if (currentGlasses < 20) {
-      updateWaterIntake(currentGlasses + 1)
-    }
-  })
-
-  function updateWaterIntake(glasses) {
-    fetch("/update_water_intake", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-Requested-With": "XMLHttpRequest",
-      },
-      body: `glasses=${glasses}`,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          const progressBar = document.querySelector(".water-progress .progress-bar")
-          progressBar.style.width = `${(data.glasses / 8) * 100}%`
-          progressBar.setAttribute("aria-valuenow", data.glasses)
-          document.querySelector(".water-progress p").textContent = `${data.glasses} / 8 glasses`
-
-          // Update visualization in modal if open
-          if (waterLevelVisualization) {
-            updateWaterVisualization(data.glasses)
-            waterGlassesInput.value = data.glasses
-          }
+        // If wake time is earlier than sleep time, it's the next day
+        if (wake < sleep) {
+            wake = new Date(`2000-01-02T${wakeTime}`);
         }
-      })
-      .catch((error) => {
-        console.error("Error:", error)
-        showAlert("An error occurred. Please try again.", "danger")
-      })
-  }
-}
 
-// Sleep form submission
-const sleepForm = document.getElementById("sleepForm")
-if (sleepForm) {
-  sleepForm.addEventListener("submit", function (e) {
-    if (this.checkValidity() === false) {
-      e.preventDefault()
-      e.stopPropagation()
-    } else {
-      // If using AJAX submission
-      if (e.submitter && e.submitter.getAttribute("data-ajax") === "true") {
-        e.preventDefault()
+        const diff = (wake - sleep) / (1000 * 60 * 60); // Convert to hours
+        return Math.round(diff * 10) / 10; // Round to 1 decimal place
+    }
 
-        const formData = new FormData(this)
+    // Update sleep duration when sleep time or wake time changes
+    const sleepTimeInput = document.getElementById("sleepTime");
+    const wakeTimeInput = document.getElementById("wakeTime");
 
-        fetch(this.action, {
-          method: "POST",
-          body: formData,
-          headers: {
-            "X-Requested-With": "XMLHttpRequest",
-          },
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            if (data.success) {
-              // Close modal if open
-              const logSleepModal = document.getElementById("logSleepModal")
-              if (logSleepModal) {
-                const modal = bootstrap.Modal.getInstance(logSleepModal)
-                if (modal) {
-                  modal.hide()
+    if (sleepTimeInput && wakeTimeInput) {
+        const updateDuration = () => {
+            const sleepTime = sleepTimeInput.value;
+            const wakeTime = wakeTimeInput.value;
+
+            if (sleepTime && wakeTime) {
+                const duration = calculateSleepDuration(sleepTime, wakeTime);
+                const durationDisplay = document.createElement("div");
+                durationDisplay.className = "form-text text-info";
+                durationDisplay.textContent = `Sleep duration: ${duration} hours`;
+
+                // Remove any existing duration display
+                const existingDisplay = sleepTimeInput.parentNode.querySelector(".text-info");
+                if (existingDisplay) {
+                    existingDisplay.remove();
                 }
-              }
 
-              // Show success message
-              showAlert("Sleep data logged successfully!", "success")
-
-              // Refresh page or update UI
-              setTimeout(() => {
-                window.location.reload()
-              }, 1000)
+                sleepTimeInput.parentNode.appendChild(durationDisplay);
             }
-          })
-          .catch((error) => {
-            console.error("Error:", error)
-            showAlert("An error occurred. Please try again.", "danger")
-          })
-      }
+        };
+
+        sleepTimeInput.addEventListener("change", updateDuration);
+        wakeTimeInput.addEventListener("change", updateDuration);
     }
 
-    this.classList.add("was-validated")
-  })
-}
-
-// Calculate sleep duration based on sleep time and wake time
-function calculateSleepDuration(sleepTime, wakeTime) {
-  const sleep = new Date(`2000-01-01T${sleepTime}`)
-  let wake = new Date(`2000-01-01T${wakeTime}`)
-
-  // If wake time is earlier than sleep time, it's the next day
-  if (wake < sleep) {
-    wake = new Date(`2000-01-02T${wakeTime}`)
-  }
-
-  const diff = (wake - sleep) / (1000 * 60 * 60) // Convert to hours
-  return Math.round(diff * 10) / 10 // Round to 1 decimal place
-}
-
-// Update sleep duration when sleep time or wake time changes
-const sleepTimeInput = document.getElementById("sleepTime")
-const wakeTimeInput = document.getElementById("wakeTime")
-
-if (sleepTimeInput && wakeTimeInput) {
-  const updateDuration = () => {
-    const sleepTime = sleepTimeInput.value
-    const wakeTime = wakeTimeInput.value
-
-    if (sleepTime && wakeTime) {
-      const duration = calculateSleepDuration(sleepTime, wakeTime)
-      const durationDisplay = document.createElement("div")
-      durationDisplay.className = "form-text text-info"
-      durationDisplay.textContent = `Sleep duration: ${duration} hours`
-
-      // Remove any existing duration display
-      const existingDisplay = sleepTimeInput.parentNode.querySelector(".text-info")
-      if (existingDisplay) {
-        existingDisplay.remove()
-      }
-
-      sleepTimeInput.parentNode.appendChild(durationDisplay)
-    }
-  }
-
-  sleepTimeInput.addEventListener("change", updateDuration)
-  wakeTimeInput.addEventListener("change", updateDuration)
-}
-
-
+    // Page load animation
+    window.addEventListener('load', function() {
+        document.body.classList.add('page-transition-enter-active');
+    });
 });
