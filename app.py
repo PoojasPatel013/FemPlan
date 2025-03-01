@@ -9,7 +9,7 @@ from functools import wraps
 import random
 
 app = Flask(__name__)
-app.config['MONGO_URI'] = 'mongodb+srv://poojaspatel1375:Pooja1375@femplann.zfzkl.mongodb.net/?retryWrites=true&w=majority&appName=Femplann'
+app.config['MONGO_URI'] = 'mongodb+srv://poojaspatel1375:Pooja1375@femplann.zfzkl.mongodb.net/femplann?retryWrites=true&w=majority'
 app.secret_key = 'poohhhhh'  # Change this in production
 mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
