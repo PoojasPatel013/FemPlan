@@ -9,8 +9,8 @@ from functools import wraps
 import random
 
 app = Flask(__name__)
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/task_manager'
-app.secret_key = 'your_secret_key'  # Change this in production
+app.config['MONGO_URI'] = 'mongodb+srv://poojaspatel1375:Pooja1375@femplann.zfzkl.mongodb.net/?retryWrites=true&w=majority&appName=Femplann'
+app.secret_key = 'poohhhhh'  # Change this in production
 mongo = PyMongo(app)
 bcrypt = Bcrypt(app)
 
@@ -881,15 +881,15 @@ def get_utc_now():
     return datetime.utcnow()
 
 if __name__ == '__main__':
-    # Create indexes for better performance
-    mongo.db.tasks.create_index([('user_id', 1), ('due_date', 1)])
-    mongo.db.tasks.create_index([('user_id', 1), ('completed', 1)])
-    mongo.db.events.create_index([('user_id', 1), ('date', 1)])
-    mongo.db.cycles.create_index([('user_id', 1), ('next_cycle_date', 1)])
-    mongo.db.mood_logs.create_index([('user_id', 1), ('date', 1)])
-    mongo.db.water_intake.create_index([('user_id', 1), ('date', 1)])
-    mongo.db.sleep_data.create_index([('user_id', 1), ('date', 1)])
-    mongo.db.self_care_goals.create_index([('user_id', 1), ('date', 1)])
-    
+    with app.app_context():
+        mongo.db.tasks.create_index([('user_id', 1), ('due_date', 1)])
+        mongo.db.tasks.create_index([('user_id', 1), ('completed', 1)])
+        mongo.db.events.create_index([('user_id', 1), ('date', 1)])
+        mongo.db.cycles.create_index([('user_id', 1), ('next_cycle_date', 1)])
+        mongo.db.mood_logs.create_index([('user_id', 1), ('date', 1)])
+        mongo.db.water_intake.create_index([('user_id', 1), ('date', 1)])
+        mongo.db.sleep_data.create_index([('user_id', 1), ('date', 1)])
+        mongo.db.self_care_goals.create_index([('user_id', 1), ('date', 1)])
+
     app.run(debug=True)
 
