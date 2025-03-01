@@ -823,7 +823,9 @@ def get_daily_quote():
         "Your worth is not measured by your productivity.",
         "Listen to your body, it's trying to tell you something.",
         "You are a force of nature.",
-        "Take care of yourself as you would your best friend."
+        "Take care of yourself as you would your best friend.",
+        "A queen will always turn pain into power",
+        "She remembered who she was and the game changed"
     ]
     return jsonify({'quote': random.choice(quotes)})
 
