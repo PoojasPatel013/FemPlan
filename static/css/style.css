@@ -551,3 +551,62 @@ a {
   animation: fadeIn 0.3s ease-in-out;
 }
 
+/* Water Intake Visualization */
+.water-visualization {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.water-container {
+  width: 60px;
+  height: 200px;
+  border: 2px solid #3b82f6;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+  margin-right: 10px;
+}
+
+.water-level {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #3b82f6;
+  transition: height 0.5s ease;
+}
+
+.water-marks {
+  height: 200px;
+  position: relative;
+}
+
+.water-mark {
+  position: absolute;
+  right: 0;
+  font-size: 0.75rem;
+  color: var(--gray-color);
+}
+
+/* Sleep Quality Selector */
+.sleep-quality-selector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rating {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rating-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 0.75rem;
+  color: var(--gray-color);
+}

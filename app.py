@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import heapq
 import json
 from functools import wraps
-from dateutil.parser import isoparse
+import random
 
 app = Flask(__name__)
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/task_manager'
@@ -200,7 +200,27 @@ def dashboard():
                 'title': 'Upcoming menstrual cycle',
                 'due': next_cycle
             })
-    now = datetime.utcnow()
+    
+    # Add new data for women's health features
+    user_id = session['user_id']
+    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Fetch mood and symptom logs
+    mood_logs = list(mongo.db.mood_logs.find({'user_id': user_id}).sort('date', -1).limit(7))
+    
+    # Fetch water intake
+    water_intake = mongo.db.water_intake.find_one({'user_id': user_id, 'date': today.strftime('%Y-%m-%d')})
+    
+    # Fetch sleep data
+    sleep_data = mongo.db.sleep_data.find_one({'user_id': user_id, 'date': today})
+    
+    # Fetch self-care goals
+    self_care_goals = list(mongo.db.self_care_goals.find({'user_id': user_id, 'date': today}))
+    
+    # Fetch workout suggestions based on cycle phase
+    cycle_phase = get_cycle_phase(user_id)  # Implement this function
+    workout_suggestions = get_workout_suggestions(cycle_phase)  # Implement this function
+    
     return render_template(
         'dashboard.html',
         tasks=sorted_tasks,
@@ -208,7 +228,12 @@ def dashboard():
         cycle=cycle,
         notifications=notifications,
         username=session['username'],
-        now = now, 
+        mood_logs=mood_logs,
+        water_intake=water_intake,
+        sleep_data=sleep_data,
+        self_care_goals=self_care_goals,
+        workout_suggestions=workout_suggestions, 
+        now = datetime.utcnow(),
         timedelta=timedelta
     )
 
@@ -239,7 +264,7 @@ def add_task():
         'priority': priority,
         'category': category,
         'due_date': due_date,
-        'created_at': datetime.utcnow(),
+        'created_at': get_utc_now(),  # Updated from utcnow()
         'completed': False
     }).inserted_id
     
@@ -261,7 +286,7 @@ def complete_task(task_id):
     
     mongo.db.tasks.update_one(
         {'_id': ObjectId(task_id)},
-        {'$set': {'completed': True, 'completed_at': datetime.utcnow()}}
+        {'$set': {'completed': True, 'completed_at': get_utc_now()}}  # Updated from utcnow()
     )
     
     flash('Task marked as complete!', 'success')
@@ -311,7 +336,7 @@ def add_event():
         'description': description,
         'date': date,
         'category': category,
-        'created_at': datetime.utcnow()
+        'created_at': get_utc_now()  # Updated from utcnow()
     }).inserted_id
     
     flash('Event added successfully!', 'success')
@@ -344,7 +369,10 @@ def cycle():
     for cycle in cycles:
         cycle['_id'] = str(cycle['_id'])
     
-    return render_template('cycle.html', cycles=cycles)
+    # Add the current datetime to the template context
+    now = datetime.utcnow()
+    
+    return render_template('cycle.html', cycles=cycles, now=now)
 
 @app.route('/track_cycle', methods=['POST'])
 @login_required
@@ -390,68 +418,6 @@ def track_cycle():
         return jsonify({'success': True, 'cycle_id': str(cycle_id)})
     return redirect(url_for('dashboard'))
 
-@app.route('/update_profile', methods=['POST'])
-@login_required
-def update_profile():
-    user_id = session['user_id']
-    
-    # Extract form data
-    username = request.form.get('username')
-    email = request.form.get('email')
-    password = request.form.get('password')  # Optional
-    
-    update_data = {'username': username, 'email': email}
-    
-    if password:
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        update_data['password'] = hashed_password
-
-    # Update user data
-    mongo.db.users.update_one(
-        {'_id': ObjectId(user_id)},
-        {'$set': update_data}
-    )
-
-    flash('Profile updated successfully!', 'success')
-    return redirect(url_for('settings'))
-
-@app.route('/change_password', methods=['POST'])
-@login_required
-def change_password():
-    user_id = session['user_id']
-    current_password = request.form.get('current_password')
-    new_password = request.form.get('new_password')
-    confirm_password = request.form.get('confirm_password')
-
-    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
-
-    if not user:
-        flash('User not found.', 'danger')
-        return redirect(url_for('settings'))
-
-    # Check if current password is correct
-    if not bcrypt.check_password_hash(user['password'], current_password):
-        flash('Current password is incorrect.', 'danger')
-        return redirect(url_for('settings'))
-
-    # Check if new passwords match
-    if new_password != confirm_password:
-        flash('New passwords do not match.', 'danger')
-        return redirect(url_for('settings'))
-
-    # Hash new password
-    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-
-    # Update password in the database
-    mongo.db.users.update_one(
-        {'_id': ObjectId(user_id)},
-        {'$set': {'password': hashed_password}}
-    )
-
-    flash('Password updated successfully!', 'success')
-    return redirect(url_for('settings'))
-
-
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -475,29 +441,87 @@ def settings():
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     return render_template('settings.html', user=user)
 
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    user_id = session['user_id']
+    email = request.form.get('email')
+    
+    if email:
+        mongo.db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'email': email}}
+        )
+        flash('Profile updated successfully!', 'success')
+    else:
+        flash('Email is required', 'danger')
+    
+    return redirect(url_for('settings'))
+
+@app.route('/change_password', methods=['POST'])
+@login_required
+def change_password():
+    user_id = session['user_id']
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+    
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    
+    if not bcrypt.check_password_hash(user['password'], current_password):
+        flash('Current password is incorrect', 'danger')
+    elif new_password != confirm_password:
+        flash('New passwords do not match', 'danger')
+    else:
+        hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+        mongo.db.users.update_one(
+            {'_id': ObjectId(user_id)},
+            {'$set': {'password': hashed_password}}
+        )
+        flash('Password changed successfully!', 'success')
+    
+    return redirect(url_for('settings'))
+
 @app.route('/delete_account', methods=['POST'])
 @login_required
 def delete_account():
     user_id = session['user_id']
-
-    # Delete user from database
-    result = mongo.db.users.delete_one({'_id': ObjectId(user_id)})
-
-    # Delete user's tasks and events
-    mongo.db.tasks.delete_many({'user_id': user_id})
-    mongo.db.events.delete_many({'user_id': user_id})
-    mongo.db.cycles.delete_many({'user_id': user_id})
-
-    # Clear session
-    session.clear()
-
-    if result.deleted_count:
-        flash('Your account has been deleted successfully.', 'success')
+    confirm_password = request.form.get('confirm_password')
+    
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+    
+    if bcrypt.check_password_hash(user['password'], confirm_password):
+        # Delete user data
+        mongo.db.tasks.delete_many({'user_id': user_id})
+        mongo.db.events.delete_many({'user_id': user_id})
+        mongo.db.cycles.delete_many({'user_id': user_id})
+        mongo.db.users.delete_one({'_id': ObjectId(user_id)})
+        
+        session.clear()
+        flash('Your account has been deleted', 'info')
+        return redirect(url_for('index'))
     else:
-        flash('Account deletion failed. Please try again.', 'danger')
+        flash('Incorrect password', 'danger')
+        return redirect(url_for('settings'))
 
-    return redirect(url_for('index'))
-
+@app.route('/export_data')
+@login_required
+def export_data():
+    user_id = session['user_id']
+    
+    user_data = mongo.db.users.find_one({'_id': ObjectId(user_id)}, {'password': 0})
+    tasks = list(mongo.db.tasks.find({'user_id': user_id}))
+    events = list(mongo.db.events.find({'user_id': user_id}))
+    cycles = list(mongo.db.cycles.find({'user_id': user_id}))
+    
+    export_data = {
+        'user': user_data,
+        'tasks': tasks,
+        'events': events,
+        'cycles': cycles
+    }
+    
+    return jsonify(export_data)
 
 @app.route('/api/calendar')
 @login_required
@@ -507,8 +531,8 @@ def calendar_data():
     end_date = request.args.get('end')
     
     if start_date and end_date:
-        start = isoparse(start_date)  # Automatically parses ISO 8601 timestamps
-        end = isoparse(end_date)
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
     else:
         # Default to current month
         today = datetime.utcnow()
@@ -683,11 +707,189 @@ def analytics():
         completion_trend=json.dumps(completion_trend)
     )
 
+@app.route('/log_mood', methods=['POST'])
+@login_required
+def log_mood():
+    user_id = session['user_id']
+    mood = request.form.get('mood')
+    symptoms = request.form.getlist('symptoms')
+    notes = request.form.get('notes')
+    
+    mongo.db.mood_logs.insert_one({
+        'user_id': user_id,
+        'date': datetime.utcnow(),
+        'mood': mood,
+        'symptoms': symptoms,
+        'notes': notes
+    })
+    
+    flash('Mood and symptoms logged successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/update_water_intake', methods=['POST'])
+@login_required
+def update_water_intake():
+    user_id = session['user_id']
+    glasses = int(request.form.get('glasses', 0))
+    today = datetime.utcnow().date()
+    
+    # Convert date to string for MongoDB
+    today_str = today.strftime('%Y-%m-%d')
+    
+    mongo.db.water_intake.update_one(
+        {'user_id': user_id, 'date': today_str},
+        {'$set': {'glasses': glasses}},
+        upsert=True
+    )
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True, 'glasses': glasses})
+    
+    flash('Water intake updated successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/log_sleep', methods=['POST'])
+@login_required
+def log_sleep():
+    user_id = session['user_id']
+    sleep_time = request.form.get('sleep_time')
+    wake_time = request.form.get('wake_time')
+    quality = int(request.form.get('quality'))
+    
+    # Calculate sleep duration
+    sleep_duration = calculate_sleep_duration(sleep_time, wake_time)
+    
+    # Use datetime object instead of date object for MongoDB
+    today_date = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    mongo.db.sleep_data.insert_one({
+        'user_id': user_id,
+        'date': today_date,
+        'sleep_time': sleep_time,
+        'wake_time': wake_time,
+        'duration': sleep_duration,
+        'quality': quality
+    })
+    
+    flash('Sleep data logged successfully!', 'success')
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+    return redirect(url_for('dashboard'))
+
+@app.route('/add_self_care_goal', methods=['POST'])
+@login_required
+def add_self_care_goal():
+    user_id = session['user_id']
+    goal = request.form.get('goal')
+    category = request.form.get('category')
+    
+    mongo.db.self_care_goals.insert_one({
+        'user_id': user_id,
+        'date': datetime.utcnow().date(),
+        'goal': goal,
+        'category': category,
+        'completed': False
+    })
+    
+    flash('Self-care goal added successfully!', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/complete_self_care_goal/<goal_id>', methods=['POST'])
+@login_required
+def complete_self_care_goal(goal_id):
+    user_id = session['user_id']
+    
+    result = mongo.db.self_care_goals.update_one(
+        {'_id': ObjectId(goal_id), 'user_id': user_id},
+        {'$set': {'completed': True}}
+    )
+    
+    if result.modified_count:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'success': False, 'message': 'Goal not found or already completed'})
+
+@app.route('/get_daily_quote')
+@login_required
+def get_daily_quote():
+    quotes = [
+        "You are strong, you are beautiful, you are enough.",
+        "Embrace your cycle, embrace your power.",
+        "Your body is a temple, treat it with love and respect.",
+        "Self-care is not selfish, it's necessary.",
+        "You are capable of amazing things.",
+        "Every day is a new opportunity to nourish your body and mind.",
+        "Your worth is not measured by your productivity.",
+        "Listen to your body, it's trying to tell you something.",
+        "You are a force of nature.",
+        "Take care of yourself as you would your best friend."
+    ]
+    return jsonify({'quote': random.choice(quotes)})
+
+@app.route('/get_pms_tips')
+@login_required
+def get_pms_tips():
+    tips = [
+        "Stay hydrated to help reduce bloating.",
+        "Eat foods rich in calcium and magnesium to ease cramps.",
+        "Practice gentle yoga or stretching to relieve tension.",
+        "Use a heating pad on your lower abdomen to soothe cramps.",
+        "Get plenty of rest and prioritize sleep.",
+        "Avoid caffeine and alcohol, which can worsen symptoms.",
+        "Try aromatherapy with lavender or peppermint essential oils.",
+        "Practice deep breathing or meditation to reduce stress.",
+        "Eat small, frequent meals to stabilize blood sugar levels.",
+        "Wear comfortable, loose-fitting clothing."
+    ]
+    return jsonify({'tip': random.choice(tips)})
+
+def get_cycle_phase(user_id):
+    # Implement logic to determine the user's current menstrual cycle phase
+    # This is a placeholder implementation
+    phases = ['menstrual', 'follicular', 'ovulatory', 'luteal']
+    return random.choice(phases)
+
+def get_workout_suggestions(cycle_phase):
+    suggestions = {
+        'menstrual': ['Gentle yoga', 'Light walking', 'Stretching'],
+        'follicular': ['Strength training', 'High-Intensity Interval Training (HIIT)', 'Running'],
+        'ovulatory': ['Dance workouts', 'Cycling', 'Pilates'],
+        'luteal': ['Moderate cardio', 'Swimming', 'Bodyweight exercises']
+    }
+    return suggestions.get(cycle_phase, ['Walking', 'Yoga', 'Light cardio'])
+
+def calculate_sleep_duration(sleep_time, wake_time):
+    """Calculate sleep duration in hours from sleep time and wake time."""
+    from datetime import datetime, timedelta
+    
+    # Parse the time strings
+    sleep_dt = datetime.strptime(sleep_time, "%H:%M")
+    wake_dt = datetime.strptime(wake_time, "%H:%M")
+    
+    # If wake time is earlier than sleep time, it's the next day
+    if wake_dt < sleep_dt:
+        wake_dt += timedelta(days=1)
+    
+    # Calculate the difference in hours
+    duration = (wake_dt - sleep_dt).total_seconds() / 3600
+    
+    # Round to 1 decimal place
+    return round(duration, 1)
+
+def get_utc_now():
+    return datetime.utcnow()
+
 if __name__ == '__main__':
     # Create indexes for better performance
     mongo.db.tasks.create_index([('user_id', 1), ('due_date', 1)])
     mongo.db.tasks.create_index([('user_id', 1), ('completed', 1)])
     mongo.db.events.create_index([('user_id', 1), ('date', 1)])
     mongo.db.cycles.create_index([('user_id', 1), ('next_cycle_date', 1)])
+    mongo.db.mood_logs.create_index([('user_id', 1), ('date', 1)])
+    mongo.db.water_intake.create_index([('user_id', 1), ('date', 1)])
+    mongo.db.sleep_data.create_index([('user_id', 1), ('date', 1)])
+    mongo.db.self_care_goals.create_index([('user_id', 1), ('date', 1)])
     
     app.run(debug=True)
+

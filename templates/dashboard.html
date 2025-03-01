@@ -137,6 +137,33 @@
             <div class="content-wrapper">
                 <!-- Quick Stats -->
                 <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="card-body">
+                                <div class="stat-icon bg-info">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>{{ water_intake.glasses if water_intake else 0 }}</h3>
+                                    <p>Glasses of Water</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card stat-card">
+                            <div class="card-body">
+                                <div class="stat-icon bg-warning">
+                                    <i class="fas fa-moon"></i>
+                                </div>
+                                <div class="stat-details">
+                                    <h3>{{ sleep_data.duration if sleep_data else 'N/A' }}</h3>
+                                    <p>Hours of Sleep</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                     <div class="col-md-4">
                         <div class="card stat-card">
                             <div class="card-body">
@@ -173,6 +200,152 @@
                                     <h3>{% if cycle %}{{ (cycle.next_cycle_date - now).days }}{% else %}N/A{% endif %}</h3>
                                     <p>Days to Next Cycle</p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">Mood Tracker</h5>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#logMoodModal">
+                                    <i class="fas fa-plus"></i> Log Mood
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="mood-chart">
+                                    <!-- Add a chart or visualization for mood data -->
+                                </div>
+                                <ul class="mood-list">
+                                    {% for log in mood_logs %}
+                                        <li class="mood-item">
+                                            <span class="mood-date">{{ log.date.strftime('%b %d') }}</span>
+                                            <span class="mood-emoji">
+                                                {% if log.mood == 'happy' %}😊
+                                                {% elif log.mood == 'neutral' %}😐
+                                                {% elif log.mood == 'sad' %}😢
+                                                {% elif log.mood == 'angry' %}😠
+                                                {% elif log.mood == 'anxious' %}😰
+                                                {% endif %}
+                                            </span>
+                                            <span class="mood-symptoms">{{ ', '.join(log.symptoms) }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Water Intake Card -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title">Water Intake</h5>
+        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#waterIntakeModal">
+            <i class="fas fa-plus"></i> Update
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="water-intake-tracker">
+            <div class="water-progress">
+                <div class="progress">
+                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ (water_intake.glasses if water_intake else 0) / 8 * 100 }}%" aria-valuenow="{{ water_intake.glasses if water_intake else 0 }}" aria-valuemin="0" aria-valuemax="8"></div>
+                </div>
+                <p class="text-center mt-2">{{ water_intake.glasses if water_intake else 0 }} / 8 glasses</p>
+            </div>
+            <div class="water-buttons mt-3">
+                <button class="btn btn-outline-info btn-sm me-2" id="decreaseWater"><i class="fas fa-minus"></i></button>
+                <button class="btn btn-info btn-sm" id="increaseWater"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+    </div>
+</div>
+                </div>
+
+                <!-- Sleep Tracker and Self-Care Goals -->
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">Sleep Tracker</h5>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#logSleepModal">
+                                    <i class="fas fa-plus"></i> Log Sleep
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="sleep-summary">
+                                    {% if sleep_data %}
+                                        <p>Last night's sleep: {{ sleep_data.duration }} hours</p>
+                                        <p>Sleep quality: 
+                                            {% for i in range(sleep_data.quality) %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% endfor %}
+                                            {% for i in range(5 - sleep_data.quality) %}
+                                                <i class="far fa-star text-warning"></i>
+                                            {% endfor %}
+                                        </p>
+                                    {% else %}
+                                        <p>No sleep data logged for today.</p>
+                                    {% endif %}
+                                </div>
+                                <div class="sleep-chart">
+                                    <!-- Add a chart or visualization for sleep data -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="card-title">Self-Care Goals</h5>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSelfCareGoalModal">
+                                    <i class="fas fa-plus"></i> Add Goal
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <ul class="self-care-goals">
+                                    {% for goal in self_care_goals %}
+                                        <li class="self-care-goal-item {% if goal.completed %}completed{% endif %}">
+                                            <span class="goal-category">{{ goal.category }}</span>
+                                            <span class="goal-text">{{ goal.goal }}</span>
+                                            {% if not goal.completed %}
+                                                <button class="btn btn-sm btn-outline-success complete-goal" data-goal-id="{{ goal._id }}">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workout Suggestions and Daily Quote -->
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Workout Suggestions</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Based on your current cycle phase, here are some suggested workouts:</p>
+                                <ul class="workout-suggestions">
+                                    {% for workout in workout_suggestions %}
+                                        <li>{{ workout }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title">Daily Inspiration</h5>
+                            </div>
+                            <div class="card-body">
+                                <blockquote class="blockquote">
+                                    <p id="dailyQuote"></p>
+                                </blockquote>
                             </div>
                         </div>
                     </div>
@@ -403,6 +576,149 @@
             </div>
         </div>
     </div>
+    <!-- Log Mood Modal -->
+    <div class="modal fade" id="logMoodModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Log Your Mood</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="moodForm" action="{{ url_for('log_mood') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">How are you feeling?</label>
+                            <div class="mood-selector">
+                                <input type="radio" class="btn-check" name="mood" id="mood-happy" value="happy" required>
+                                <label class="btn btn-outline-primary" for="mood-happy">😊 Happy</label>
+
+                                <input type="radio" class="btn-check" name="mood" id="mood-neutral" value="neutral">
+                                <label class="btn btn-outline-primary" for="mood-neutral">😐 Neutral</label>
+
+                                <input type="radio" class="btn-check" name="mood" id="mood-sad" value="sad">
+                                <label class="btn btn-outline-primary" for="mood-sad">😢 Sad</label>
+
+                                <input type="radio" class="btn-check" name="mood" id="mood-angry" value="angry">
+                                <label class="btn btn-outline-primary" for="mood-angry">😠 Angry</label>
+
+                                <input type="radio" class="btn-check" name="mood" id="mood-anxious" value="anxious">
+                                <label class="btn btn-outline-primary" for="mood-anxious">😰 Anxious</label>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Any symptoms?</label>
+                            <div class="symptom-selector">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="symptoms" value="cramps" id="symptom-cramps">
+                                    <label class="form-check-label" for="symptom-cramps">Cramps</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="symptoms" value="headache" id="symptom-headache">
+                                    <label class="form-check-label" for="symptom-headache">Headache</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="symptoms" value="bloating" id="symptom-bloating">
+                                    <label class="form-check-label" for="symptom-bloating">Bloating</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="symptoms" value="fatigue" id="symptom-fatigue">
+                                    <label class="form-check-label" for="symptom-fatigue">Fatigue</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="moodNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="moodNotes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Log Mood</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Log Sleep Modal -->
+    <div class="modal fade" id="logSleepModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Log Your Sleep</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="sleepForm" action="{{ url_for('log_sleep') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="sleepTime" class="form-label">Sleep Time</label>
+                            <input type="time" class="form-control" id="sleepTime" name="sleep_time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="wakeTime" class="form-label">Wake Time</label>
+                            <input type="time" class="form-control" id="wakeTime" name="wake_time" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Sleep Quality</label>
+                            <div class="sleep-quality-selector">
+                                <input type="radio" class="btn-check" name="quality" id="quality-1" value="1" required>
+                                <label class="btn btn-outline-primary" for="quality-1">1</label>
+
+                                <input type="radio" class="btn-check" name="quality" id="quality-2" value="2">
+                                <label class="btn btn-outline-primary" for="quality-2">2</label>
+
+                                <input type="radio" class="btn-check" name="quality" id="quality-3" value="3">
+                                <label class="btn btn-outline-primary" for="quality-3">3</label>
+
+                                <input type="radio" class="btn-check" name="quality" id="quality-4" value="4">
+                                <label class="btn btn-outline-primary" for="quality-4">4</label>
+
+                                <input type="radio" class="btn-check" name="quality" id="quality-5" value="5">
+                                <label class="btn btn-outline-primary" for="quality-5">5</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Log Sleep</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Self-Care Goal Modal -->
+    <div class="modal fade" id="addSelfCareGoalModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Self-Care Goal</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="selfCareGoalForm" action="{{ url_for('add_self_care_goal') }}" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="selfCareGoal" class="form-label">Goal</label>
+                            <input type="text" class="form-control" id="selfCareGoal" name="goal" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="selfCareCategory" class="form-label">Category</label>
+                            <select class="form-select" id="selfCareCategory" name="category" required>
+                                <option value="Physical">Physical</option>
+                                <option value="Mental">Mental</option>
+                                <option value="Emotional">Emotional</option>
+                                <option value="Social">Social</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Goal</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -518,7 +834,85 @@
             document.getElementById('closeSidebar').addEventListener('click', function() {
                 document.getElementById('sidebar').classList.remove('show');
             });
+
+            const waterProgress = document.querySelector('.water-progress .progress-bar');
+            const waterText = document.querySelector('.water-progress p');
+            const decreaseWaterBtn = document.getElementById('decreaseWater');
+            const increaseWaterBtn = document.getElementById('increaseWater');
+
+            function updateWaterIntake(glasses) {
+                fetch('/update_water_intake', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `glasses=${glasses}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        waterProgress.style.width = `${(data.glasses / 8) * 100}%`;
+                        waterProgress.setAttribute('aria-valuenow', data.glasses);
+                        waterText.textContent = `${data.glasses} / 8 glasses`;
+                    }
+                });
+            }
+
+            decreaseWaterBtn.addEventListener('click', () => {
+                const currentGlasses = parseInt(waterProgress.getAttribute('aria-valuenow'));
+                if (currentGlasses > 0) {
+                    updateWaterIntake(currentGlasses - 1);
+                }
+            });
+
+            increaseWaterBtn.addEventListener('click', () => {
+                const currentGlasses = parseInt(waterProgress.getAttribute('aria-valuenow'));
+                if (currentGlasses < 8) {
+                    updateWaterIntake(currentGlasses + 1);
+                }
+            });
+
+            // Complete self-care goal functionality
+            const completeGoalBtns = document.querySelectorAll('.complete-goal');
+            completeGoalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const goalId = this.dataset.goalId;
+                    fetch(`/complete_self_care_goal/${goalId}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.closest('.self-care-goal-item').classList.add('completed');
+                            this.remove();
+                        }
+                    });
+                });
+            });
+
+            // Fetch and display daily quote
+            fetch('/get_daily_quote')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('dailyQuote').textContent = data.quote;
+                });
+
+            fetch('/get_pms_tips')
+                .then(response => response.json())
+                .then(data => {
+                    // You can display this tip in a designated area
+                    const tipElement = document.createElement('div');
+                    tipElement.classList.add('pms-tip');
+                    tipElement.textContent = data.tip;
+                    document.querySelector('.content-wrapper').appendChild(tipElement);
+                });
         });
     </script>
 </body>
 </html>
+
+

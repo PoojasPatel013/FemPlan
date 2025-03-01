@@ -584,7 +584,7 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx, {
             type: 'pie',
             data: {
-                labels: ['Workout', 'Study', 'Other'],
+                labels: ['Workout', 'Study', 'Health', 'Social', 'Other'],
                 datasets: [{
                     data: [workout, study, other],
                     backgroundColor: [
@@ -614,4 +614,191 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    // Water intake functionality
+const waterGlassesInput = document.getElementById("waterGlasses")
+const waterLevelVisualization = document.getElementById("waterLevelVisualization")
+const decreaseWaterBtn = document.getElementById("decreaseWater")
+const increaseWaterBtn = document.getElementById("increaseWater")
+
+// Declare showAlert function
+function showAlert(message, type) {
+  const alertDiv = document.createElement("div")
+  alertDiv.className = `alert alert-${type} alert-dismissible fade show`
+  alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `
+
+  const alertContainer = document.querySelector(".container") // Or any appropriate container
+  if (alertContainer) {
+    alertContainer.insertBefore(alertDiv, alertContainer.firstChild)
+
+    // Automatically close the alert after 5 seconds
+    setTimeout(() => {
+      const bsAlert = new bootstrap.Alert(alertDiv)
+      bsAlert.close()
+    }, 5000)
+  } else {
+    console.warn("Alert container not found.")
+  }
+}
+
+if (waterGlassesInput) {
+  waterGlassesInput.addEventListener("input", function () {
+    updateWaterVisualization(this.value)
+  })
+}
+
+if (waterLevelVisualization && decreaseWaterBtn && increaseWaterBtn) {
+  function updateWaterVisualization(glasses) {
+    const percentage = (glasses / 8) * 100
+    waterLevelVisualization.style.height = `${percentage}%`
+  }
+
+  decreaseWaterBtn.addEventListener("click", () => {
+    const currentGlasses = Number.parseInt(
+      document.querySelector(".water-progress .progress-bar").getAttribute("aria-valuenow"),
+    )
+    if (currentGlasses > 0) {
+      updateWaterIntake(currentGlasses - 1)
+    }
+  })
+
+  increaseWaterBtn.addEventListener("click", () => {
+    const currentGlasses = Number.parseInt(
+      document.querySelector(".water-progress .progress-bar").getAttribute("aria-valuenow"),
+    )
+    if (currentGlasses < 20) {
+      updateWaterIntake(currentGlasses + 1)
+    }
+  })
+
+  function updateWaterIntake(glasses) {
+    fetch("/update_water_intake", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: `glasses=${glasses}`,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          const progressBar = document.querySelector(".water-progress .progress-bar")
+          progressBar.style.width = `${(data.glasses / 8) * 100}%`
+          progressBar.setAttribute("aria-valuenow", data.glasses)
+          document.querySelector(".water-progress p").textContent = `${data.glasses} / 8 glasses`
+
+          // Update visualization in modal if open
+          if (waterLevelVisualization) {
+            updateWaterVisualization(data.glasses)
+            waterGlassesInput.value = data.glasses
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error)
+        showAlert("An error occurred. Please try again.", "danger")
+      })
+  }
+}
+
+// Sleep form submission
+const sleepForm = document.getElementById("sleepForm")
+if (sleepForm) {
+  sleepForm.addEventListener("submit", function (e) {
+    if (this.checkValidity() === false) {
+      e.preventDefault()
+      e.stopPropagation()
+    } else {
+      // If using AJAX submission
+      if (e.submitter && e.submitter.getAttribute("data-ajax") === "true") {
+        e.preventDefault()
+
+        const formData = new FormData(this)
+
+        fetch(this.action, {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Close modal if open
+              const logSleepModal = document.getElementById("logSleepModal")
+              if (logSleepModal) {
+                const modal = bootstrap.Modal.getInstance(logSleepModal)
+                if (modal) {
+                  modal.hide()
+                }
+              }
+
+              // Show success message
+              showAlert("Sleep data logged successfully!", "success")
+
+              // Refresh page or update UI
+              setTimeout(() => {
+                window.location.reload()
+              }, 1000)
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error)
+            showAlert("An error occurred. Please try again.", "danger")
+          })
+      }
+    }
+
+    this.classList.add("was-validated")
+  })
+}
+
+// Calculate sleep duration based on sleep time and wake time
+function calculateSleepDuration(sleepTime, wakeTime) {
+  const sleep = new Date(`2000-01-01T${sleepTime}`)
+  let wake = new Date(`2000-01-01T${wakeTime}`)
+
+  // If wake time is earlier than sleep time, it's the next day
+  if (wake < sleep) {
+    wake = new Date(`2000-01-02T${wakeTime}`)
+  }
+
+  const diff = (wake - sleep) / (1000 * 60 * 60) // Convert to hours
+  return Math.round(diff * 10) / 10 // Round to 1 decimal place
+}
+
+// Update sleep duration when sleep time or wake time changes
+const sleepTimeInput = document.getElementById("sleepTime")
+const wakeTimeInput = document.getElementById("wakeTime")
+
+if (sleepTimeInput && wakeTimeInput) {
+  const updateDuration = () => {
+    const sleepTime = sleepTimeInput.value
+    const wakeTime = wakeTimeInput.value
+
+    if (sleepTime && wakeTime) {
+      const duration = calculateSleepDuration(sleepTime, wakeTime)
+      const durationDisplay = document.createElement("div")
+      durationDisplay.className = "form-text text-info"
+      durationDisplay.textContent = `Sleep duration: ${duration} hours`
+
+      // Remove any existing duration display
+      const existingDisplay = sleepTimeInput.parentNode.querySelector(".text-info")
+      if (existingDisplay) {
+        existingDisplay.remove()
+      }
+
+      sleepTimeInput.parentNode.appendChild(durationDisplay)
+    }
+  }
+
+  sleepTimeInput.addEventListener("change", updateDuration)
+  wakeTimeInput.addEventListener("change", updateDuration)
+}
+
+
 });
