@@ -390,6 +390,68 @@ def track_cycle():
         return jsonify({'success': True, 'cycle_id': str(cycle_id)})
     return redirect(url_for('dashboard'))
 
+@app.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    user_id = session['user_id']
+    
+    # Extract form data
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')  # Optional
+    
+    update_data = {'username': username, 'email': email}
+    
+    if password:
+        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        update_data['password'] = hashed_password
+
+    # Update user data
+    mongo.db.users.update_one(
+        {'_id': ObjectId(user_id)},
+        {'$set': update_data}
+    )
+
+    flash('Profile updated successfully!', 'success')
+    return redirect(url_for('settings'))
+
+@app.route('/change_password', methods=['POST'])
+@login_required
+def change_password():
+    user_id = session['user_id']
+    current_password = request.form.get('current_password')
+    new_password = request.form.get('new_password')
+    confirm_password = request.form.get('confirm_password')
+
+    user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
+
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('settings'))
+
+    # Check if current password is correct
+    if not bcrypt.check_password_hash(user['password'], current_password):
+        flash('Current password is incorrect.', 'danger')
+        return redirect(url_for('settings'))
+
+    # Check if new passwords match
+    if new_password != confirm_password:
+        flash('New passwords do not match.', 'danger')
+        return redirect(url_for('settings'))
+
+    # Hash new password
+    hashed_password = bcrypt.generate_password_hash(new_password).decode('utf-8')
+
+    # Update password in the database
+    mongo.db.users.update_one(
+        {'_id': ObjectId(user_id)},
+        {'$set': {'password': hashed_password}}
+    )
+
+    flash('Password updated successfully!', 'success')
+    return redirect(url_for('settings'))
+
+
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
@@ -412,6 +474,30 @@ def settings():
     
     user = mongo.db.users.find_one({'_id': ObjectId(user_id)})
     return render_template('settings.html', user=user)
+
+@app.route('/delete_account', methods=['POST'])
+@login_required
+def delete_account():
+    user_id = session['user_id']
+
+    # Delete user from database
+    result = mongo.db.users.delete_one({'_id': ObjectId(user_id)})
+
+    # Delete user's tasks and events
+    mongo.db.tasks.delete_many({'user_id': user_id})
+    mongo.db.events.delete_many({'user_id': user_id})
+    mongo.db.cycles.delete_many({'user_id': user_id})
+
+    # Clear session
+    session.clear()
+
+    if result.deleted_count:
+        flash('Your account has been deleted successfully.', 'success')
+    else:
+        flash('Account deletion failed. Please try again.', 'danger')
+
+    return redirect(url_for('index'))
+
 
 @app.route('/api/calendar')
 @login_required
