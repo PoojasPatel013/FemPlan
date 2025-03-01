@@ -531,8 +531,8 @@ def calendar_data():
     end_date = request.args.get('end')
     
     if start_date and end_date:
-        start = datetime.strptime(start_date, "%Y-%m-%d")
-        end = datetime.strptime(end_date, "%Y-%m-%d")
+        start = datetime.fromisoformat(start_date.split("T")[0])
+        end = datetime.fromisoformat(end_date.split("T")[0])
     else:
         # Default to current month
         today = datetime.utcnow()
