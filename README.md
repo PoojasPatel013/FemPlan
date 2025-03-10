@@ -60,7 +60,7 @@ FemPlan/
 ## Installation & Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/femplan.git
+   git clone https://github.com/PoojasPatel013/femplan.git
    cd femplan
    ```
 2. Install dependencies:
